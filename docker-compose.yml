@@ -1,0 +1,324 @@
+# =============================================================================
+# Docker Compose — Sistema de Drones Distribuído (Token Ring)
+# Versão: Docker Bridge Windows/Mac — v3
+# =============================================================================
+#
+# MUDANÇAS v3 (correções de bugs):
+#   - Drones e sensores agora têm depends_on nos brokers (service_started).
+#     Evita a janela cega em que drones anunciam UDP antes de qualquer broker
+#     ter o socket DRONE_UPDATE_PORT aberto.
+#   - Brokers mantêm depends_on entre si para garantir que a resolução DNS
+#     do Docker esteja pronta antes de qualquer broker tentar pingar peers.
+#
+# Mapeamento de portas por broker:
+#   broker-1: token=6001, ping=6101(UDP), hb=6201(UDP), req=7001
+#   broker-2: token=6002, ping=6102(UDP), hb=6202(UDP), req=7002
+#   broker-3: token=6003, ping=6103(UDP), hb=6203(UDP), req=7003
+#   broker-4: token=6004, ping=6104(UDP), hb=6204(UDP), req=7004
+# =============================================================================
+
+x-broker-peers: &broker-peers
+  BROKER_PEERS: "broker-1:broker-1:6001:7001,broker-2:broker-2:6002:7002,broker-3:broker-3:6003:7003,broker-4:broker-4:6004:7004"
+  PYTHONUNBUFFERED: "1"
+
+services:
+
+  # ── Brokers ───────────────────────────────────────────────────────────
+  broker-1:
+    build:
+      context: ./broker
+      dockerfile: Dockerfile
+    image: drones/broker:latest
+    container_name: broker-1
+    hostname: broker-1
+    command: python broker.py --id broker-1 --tport 6001 --rport 7001
+    environment:
+      <<: *broker-peers
+    networks:
+      - drones-net
+    ports:
+      - "6001:6001"
+      - "6101:6101/udp"
+      - "6201:6201/udp"
+      - "7001:7001"
+    restart: unless-stopped
+    tty: true
+
+  broker-2:
+    build:
+      context: ./broker
+      dockerfile: Dockerfile
+    image: drones/broker:latest
+    container_name: broker-2
+    hostname: broker-2
+    command: python broker.py --id broker-2 --tport 6002 --rport 7002
+    environment:
+      <<: *broker-peers
+    networks:
+      - drones-net
+    ports:
+      - "6002:6002"
+      - "6102:6102/udp"
+      - "6202:6202/udp"
+      - "7002:7002"
+    restart: unless-stopped
+    tty: true
+
+  broker-3:
+    build:
+      context: ./broker
+      dockerfile: Dockerfile
+    image: drones/broker:latest
+    container_name: broker-3
+    hostname: broker-3
+    command: python broker.py --id broker-3 --tport 6003 --rport 7003
+    environment:
+      <<: *broker-peers
+    networks:
+      - drones-net
+    ports:
+      - "6003:6003"
+      - "6103:6103/udp"
+      - "6203:6203/udp"
+      - "7003:7003"
+    restart: unless-stopped
+    tty: true
+
+  broker-4:
+    build:
+      context: ./broker
+      dockerfile: Dockerfile
+    image: drones/broker:latest
+    container_name: broker-4
+    hostname: broker-4
+    command: python broker.py --id broker-4 --tport 6004 --rport 7004
+    environment:
+      <<: *broker-peers
+    networks:
+      - drones-net
+    ports:
+      - "6004:6004"
+      - "6104:6104/udp"
+      - "6204:6204/udp"
+      - "7004:7004"
+    restart: unless-stopped
+    tty: true
+
+  # ── Drones ────────────────────────────────────────────────────────────
+  drone-001:
+    build:
+      context: ./drone
+      dockerfile: Dockerfile
+    image: drones/drone:latest
+    container_name: drone-001
+    hostname: drone-001
+    command: python drone.py --id drone-001 --porta 8001
+    environment:
+      <<: *broker-peers
+    networks:
+      - drones-net
+    ports:
+      - "8001:8001"
+    depends_on:
+      - broker-1
+      - broker-2
+      - broker-3
+      - broker-4
+    restart: unless-stopped
+    tty: true
+
+  drone-002:
+    build:
+      context: ./drone
+      dockerfile: Dockerfile
+    image: drones/drone:latest
+    container_name: drone-002
+    hostname: drone-002
+    command: python drone.py --id drone-002 --porta 8002
+    environment:
+      <<: *broker-peers
+    networks:
+      - drones-net
+    ports:
+      - "8002:8002"
+    depends_on:
+      - broker-1
+      - broker-2
+      - broker-3
+      - broker-4
+    restart: unless-stopped
+    tty: true
+
+  drone-003:
+    build:
+      context: ./drone
+      dockerfile: Dockerfile
+    image: drones/drone:latest
+    container_name: drone-003
+    hostname: drone-003
+    command: python drone.py --id drone-003 --porta 8003
+    environment:
+      <<: *broker-peers
+    networks:
+      - drones-net
+    ports:
+      - "8003:8003"
+    depends_on:
+      - broker-1
+      - broker-2
+      - broker-3
+      - broker-4
+    restart: unless-stopped
+    tty: true
+
+  drone-004:
+    build:
+      context: ./drone
+      dockerfile: Dockerfile
+    image: drones/drone:latest
+    container_name: drone-004
+    hostname: drone-004
+    command: python drone.py --id drone-004 --porta 8004
+    environment:
+      <<: *broker-peers
+    networks:
+      - drones-net
+    ports:
+      - "8004:8004"
+    depends_on:
+      - broker-1
+      - broker-2
+      - broker-3
+      - broker-4
+    restart: unless-stopped
+    tty: true
+
+  drone-005:
+    build:
+      context: ./drone
+      dockerfile: Dockerfile
+    image: drones/drone:latest
+    container_name: drone-005
+    hostname: drone-005
+    command: python drone.py --id drone-005 --porta 8005
+    environment:
+      <<: *broker-peers
+    networks:
+      - drones-net
+    ports:
+      - "8005:8005"
+    depends_on:
+      - broker-1
+      - broker-2
+      - broker-3
+      - broker-4
+    restart: unless-stopped
+    tty: true
+
+  drone-006:
+    build:
+      context: ./drone
+      dockerfile: Dockerfile
+    image: drones/drone:latest
+    container_name: drone-006
+    hostname: drone-006
+    command: python drone.py --id drone-006 --porta 8006
+    environment:
+      <<: *broker-peers
+    networks:
+      - drones-net
+    ports:
+      - "8006:8006"
+    depends_on:
+      - broker-1
+      - broker-2
+      - broker-3
+      - broker-4
+    restart: unless-stopped
+    tty: true
+
+  # ── Sensores ──────────────────────────────────────────────────────────
+  sensor-1:
+    build:
+      context: ./sensor
+      dockerfile: Dockerfile
+    image: drones/sensor:latest
+    container_name: sensor-1
+    hostname: sensor-1
+    command: python sensor.py --id sensor-1 --broker broker-1 --intervalo 8
+    environment:
+      <<: *broker-peers
+    networks:
+      - drones-net
+    depends_on:
+      - broker-1
+      - broker-2
+      - broker-3
+      - broker-4
+    restart: unless-stopped
+    tty: true
+
+  sensor-2:
+    build:
+      context: ./sensor
+      dockerfile: Dockerfile
+    image: drones/sensor:latest
+    container_name: sensor-2
+    hostname: sensor-2
+    command: python sensor.py --id sensor-2 --broker broker-2 --intervalo 12
+    environment:
+      <<: *broker-peers
+    networks:
+      - drones-net
+    depends_on:
+      - broker-1
+      - broker-2
+      - broker-3
+      - broker-4
+    restart: unless-stopped
+    tty: true
+
+  sensor-3:
+    build:
+      context: ./sensor
+      dockerfile: Dockerfile
+    image: drones/sensor:latest
+    container_name: sensor-3
+    hostname: sensor-3
+    command: python sensor.py --id sensor-3 --broker broker-3 --intervalo 15
+    environment:
+      <<: *broker-peers
+    networks:
+      - drones-net
+    depends_on:
+      - broker-1
+      - broker-2
+      - broker-3
+      - broker-4
+    restart: unless-stopped
+    tty: true
+
+  sensor-4:
+    build:
+      context: ./sensor
+      dockerfile: Dockerfile
+    image: drones/sensor:latest
+    container_name: sensor-4
+    hostname: sensor-4
+    command: python sensor.py --id sensor-4 --broker broker-4 --intervalo 20
+    environment:
+      <<: *broker-peers
+    networks:
+      - drones-net
+    depends_on:
+      - broker-1
+      - broker-2
+      - broker-3
+      - broker-4
+    restart: unless-stopped
+    tty: true
+
+# ── Rede bridge simples (Docker resolve nomes de container via DNS) ────
+networks:
+  drones-net:
+    driver: bridge
